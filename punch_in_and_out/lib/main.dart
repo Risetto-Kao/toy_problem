@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(MyApp());
@@ -8,85 +9,91 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(title: 'Punch In & Out'),
+      initialRoute: RouteConfig.homepage,
+      getPages: RouteConfig.getPages,
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  final String title;
+class RouteConfig {
+  static final String homepage = '/';
+  static final String secondPage = '/second';
 
-  const HomePage({Key? key, required this.title}) : super(key: key);
-  @override
-  _HomePageState createState() => _HomePageState();
+  static final List<GetPage> getPages = [
+    GetPage(name: homepage, page: () => Homepage()),
+    GetPage(name: secondPage, page: () => SecondPage())
+  ];
 }
 
-class _HomePageState extends State<HomePage> {
+class TestController extends GetxController {
+  var count = 1.obs;
+  void toSecondPage() => Get.toNamed(RouteConfig.secondPage);
+  void increase() => count += 1;
+  
+}
+
+class Homepage extends StatelessWidget {
+  final TestController controller = Get.put(TestController(),tag: 'the second controller');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[700],
-      appBar: AppBar(
-          title: Center(
-            child: Text(
-              widget.title,
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      appBar: AppBar(title: Text('page-one')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.toNamed(RouteConfig.secondPage),
+        child: const Icon(Icons.arrow_forward_outlined),
+      ),
+      body: Center(
+        child: Row(
+          children: [
+            TextButton(onPressed: controller.increase, child: Text('increase')),
+            Obx(
+              () => Text('page one click ${controller.count.value} times',
+                  style: TextStyle(fontSize: 30.0)),
             ),
-          ),
-          backgroundColor: Colors.transparent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SecondController {
+  var secondCount = 2.obs;
+  void increase() => secondCount += 1;
+  void decrease() => secondCount -= 1;
+}
+
+class SecondPage extends StatelessWidget {
+  final TestController controller = Get.put(TestController(),tag: 'the second controller');
+
+  // final TestController controller = Get.find();
+  final SecondController secondController = Get.put(SecondController());
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('page-tw0')),
       body: Column(
         children: [
-          Expanded(
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40)),
-                  color: Colors.white),
-            ),
-            flex: 7,
-          ),
-          Expanded(
-            child: Container(
-              width: MediaQuery.of(context).size.width,
-              color: Colors.lightBlue[50],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    iconSize: 80,
-                    onPressed: null,
-                    icon: Icon(
-                      Icons.flag,
-                      color: Colors.green[600],
-                    ),
-                  ),
-                  IconButton(
-                    hoverColor: Colors.blue,
-                    iconSize: 80,
-                    onPressed: null,
-                    icon: Icon(
-                      Icons.bedtime,
-                      color: Colors.amber[300],
-                      semanticLabel: 'Punch Out',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            flex: 3,
-          ),
+          TextButton(
+              onPressed: () {
+                controller.increase();
+                secondController.decrease();
+              },
+              child: Text('++--')),
+          Obx(() => Text('from 1 st page: count = ${controller.count.value}')),
+          Obx(() => Text(
+              'from 2 st page: count = ${secondController.secondCount.value}')),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () => Get.toNamed(RouteConfig.homepage)),
     );
   }
 }
